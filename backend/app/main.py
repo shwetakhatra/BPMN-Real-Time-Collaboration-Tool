@@ -1,0 +1,30 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import socketio
+from app.services.user_manager import user_manager
+from app.events import register_events
+
+# Socket.IO & FastAPI setup
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+app = FastAPI(title="BPMN Realtime Collaboration API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+asgi_app = socketio.ASGIApp(sio, app)
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "users_online": len(user_manager.list_users())}
+
+# Register all Socket.IO events
+register_events(sio)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:asgi_app", host="127.0.0.1", port=8000, reload=True)
