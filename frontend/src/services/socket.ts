@@ -1,17 +1,32 @@
 // src/services/socket.ts
 import io from "socket.io-client";
 
-const username = "Shweta"; // You can later make this dynamic
+export let socket: ReturnType<typeof io> | null = null;
 
-export const socket = io("http://127.0.0.1:8000", {
-  transports: ["websocket"],
-  auth: { username },
-});
+export function initSocket(username: string) {
+  if (socket?.connected) {
+    socket.disconnect();
+    socket = null;
+  }
+  
+  socket = io("http://127.0.0.1:8000", {
+    transports: ["websocket"],
+    auth: { username },
+    query: { username },
+  });
 
-socket.on("connect", () => {
-  console.log("✅ Connected to backend:", socket.id);
-});
+  socket.on("connect", () => {
+    window.dispatchEvent(new CustomEvent("socket-ready"));
+    setTimeout(() => {
+      if (socket?.connected) {
+        socket.emit("get_users");
+      }
+    }, 200);
+  });
 
-socket.on("disconnect", () => {
-  console.log("❌ Disconnected from backend");
-});
+  socket.on("disconnect", () => {
+    socket = null;
+  });
+
+  return socket;
+}

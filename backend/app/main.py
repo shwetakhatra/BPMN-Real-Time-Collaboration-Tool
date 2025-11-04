@@ -22,6 +22,11 @@ asgi_app = socketio.ASGIApp(sio, app)
 async def health_check():
     return {"status": "ok", "users_online": len(user_manager.list_users())}
 
+# Users list endpoint (fallback/diagnostics)
+@app.get("/users")
+async def list_users():
+    return {"users": user_manager.list_users()}
+
 # Register all Socket.IO events
 register_events(sio)
 

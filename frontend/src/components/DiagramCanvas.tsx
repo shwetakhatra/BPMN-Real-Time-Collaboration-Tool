@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import BpmnViewer from "bpmn-js/lib/NavigatedViewer";
 import type Canvas from "diagram-js/lib/core/Canvas";
-import { socket } from "../services/socket";
-import { useDiagramStore } from "../store/useDiagramStore";
+import { socket } from "@/services/socket";
+import { useDiagramStore } from "@/store/useDiagramStore";
 
 const DiagramCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,10 +52,10 @@ const DiagramCanvas: React.FC = () => {
   };
 
   return (
-    <div className="relative flex-1 bg-white">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="relative flex-1 bg-white overflow-hidden">
+      <div ref={containerRef} className="w-full h-full min-h-0" />
       <button
-        className="absolute top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-md"
+        className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-blue-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-xs sm:text-sm hover:bg-blue-600 transition-colors shadow-md"
         onClick={handleEdit}
       >
         Test Edit

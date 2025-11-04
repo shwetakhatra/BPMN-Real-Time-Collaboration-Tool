@@ -1,21 +1,47 @@
+import asyncio
 import datetime
-from app.services import user_manager, diagram_state
+from app.services.user_manager import user_manager
+from app.services import diagram_state
 from app.models import DiagramUpdatePayload, LockPayload, ChatMessagePayload
 from app.utils import log_and_broadcast
 from socketio import AsyncServer
 
-async def register_events(sio: AsyncServer):
+def register_events(sio: AsyncServer):
     @sio.event(namespace="/")
-    async def connect(sid, environ):
-        username = environ.get("HTTP_USERNAME", f"User-{sid[:5]}")
-        user_manager.add_user(sid, username)
-        await sio.emit("user_update", user_manager.list_users())
-        await log_and_broadcast(sio, f"{username} connected")
+    async def connect(sid, environ, auth=None):
+        try:
+            from urllib.parse import parse_qs
+            username = (auth or {}).get("username") or environ.get("HTTP_USERNAME")
+            if not username:
+                qs = parse_qs(environ.get("QUERY_STRING", ""))
+                q_user = qs.get("username", [None])[0]
+                if q_user:
+                    username = q_user
+            if not username:
+                username = f"User-{sid[:5]}"
+            
+            if sid in user_manager.online_users:
+                user_manager.remove_user(sid)
+            
+            user_manager.add_user(sid, username)
+            await asyncio.sleep(0.1)
+            
+            all_users = list(user_manager.online_users.values())
+            users = list(dict.fromkeys(all_users))
+            await sio.emit("user_update", users, to=sid, namespace="/")
+            await sio.emit("user_update", users, namespace="/")
+            await log_and_broadcast(sio, f"{username} connected")
+        except Exception as e:
+            print(f"Connection error: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
 
     @sio.event(namespace="/")
     async def disconnect(sid):
         username = user_manager.remove_user(sid)
-        await sio.emit("user_update", user_manager.list_users())
+        all_users = list(user_manager.online_users.values())
+        users = list(dict.fromkeys(all_users))
+        await sio.emit("user_update", users, namespace="/")
         await log_and_broadcast(sio, f"{username} disconnected")
 
     @sio.event(namespace="/")
@@ -48,6 +74,12 @@ async def register_events(sio: AsyncServer):
     @sio.event(namespace="/")
     async def get_versions(sid):
         await sio.emit("diagram_versions", diagram_state.versions, to=sid)
+
+    @sio.event(namespace="/")
+    async def get_users(sid):
+        all_users = list(user_manager.online_users.values())
+        users = list(dict.fromkeys(all_users))
+        await sio.emit("user_update", users, to=sid, namespace="/")
 
     @sio.event(namespace="/")
     async def send_chat(sid, data):
