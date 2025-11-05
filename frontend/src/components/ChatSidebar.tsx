@@ -31,8 +31,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 
   return (
     <div className="flex flex-col h-full p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3 md:mb-4">
-        <h2 className="text-base md:text-lg font-semibold">Chat</h2>
+      <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b border-gray-300">
+        <h2 className="text-base md:text-lg font-semibold text-gray-800 hover:text-gray-900 transition-colors cursor-default">
+          Chat
+        </h2>
         {onClose && (
           <Button
             variant="icon"

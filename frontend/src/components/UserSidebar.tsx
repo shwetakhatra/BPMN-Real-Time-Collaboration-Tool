@@ -28,8 +28,10 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onClose }) => {
 
   return (
     <div className="p-3 md:p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3 md:mb-4">
-        <h2 className="text-base md:text-lg font-semibold">Active Users</h2>
+      <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 border-b border-gray-300">
+        <h2 className="text-base md:text-lg font-semibold text-gray-800 hover:text-gray-900 transition-colors cursor-default">
+          Active Users
+        </h2>
         {onClose && (
           <Button
             variant="icon"
