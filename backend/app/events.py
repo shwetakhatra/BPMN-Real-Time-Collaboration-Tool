@@ -41,6 +41,16 @@ def register_events(sio: AsyncServer):
             if current_locks:
                 await sio.emit("locks_update", current_locks, to=sid, namespace="/")
             
+            # Send existing chat messages to new connection
+            current_chat = diagram_state.chat
+            if current_chat:
+                await sio.emit("chat_history", current_chat, to=sid, namespace="/")
+            
+            # Send existing activity logs to new connection
+            current_logs = diagram_state.logs
+            if current_logs:
+                await sio.emit("activity_log", current_logs, to=sid, namespace="/")
+            
             await log_and_broadcast(sio, f"{username} connected")
         except Exception as e:
             print(f"Connection error: {e}", flush=True)
@@ -107,7 +117,7 @@ def register_events(sio: AsyncServer):
 
     @sio.event(namespace="/")
     async def get_activity_log(sid):
-        await sio.emit("activity_log", diagram_state.logs, to=sid)
+        await sio.emit("activity_log", diagram_state.logs, to=sid, namespace="/")
 
     @sio.event(namespace="/")
     async def get_versions(sid):
@@ -134,7 +144,7 @@ def register_events(sio: AsyncServer):
         payload = ChatMessagePayload(**data)
         user = user_manager.get_username(sid)
         entry = diagram_state.add_chat_message(user, payload.message)
-        await sio.emit("receive_chat", entry)
+        await sio.emit("receive_chat", entry, namespace="/")
 
     @sio.event(namespace="/")
     async def cursor_move(sid, data):

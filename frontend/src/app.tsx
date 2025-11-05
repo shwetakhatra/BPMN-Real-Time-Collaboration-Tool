@@ -12,6 +12,9 @@ const App = () => {
   const username = useDiagramStore((s) => s.username);
   const setUsers = useDiagramStore((s) => s.setUsers);
   const addChatMessage = useDiagramStore((s) => s.addChatMessage);
+  const setChatMessages = useDiagramStore((s) => s.setChatMessages);
+  const incrementUnreadCount = useDiagramStore((s) => s.incrementUnreadCount);
+  const resetUnreadCount = useDiagramStore((s) => s.resetUnreadCount);
 
   useEffect(() => {
     if (!username) return;
@@ -37,8 +40,18 @@ const App = () => {
       }
     };
     
-    const onReceiveChat = (entry: { username: string; message: string }) => {
+    const onReceiveChat = (entry: { username: string; message: string; timestamp?: string }) => {
       addChatMessage(entry);
+      // Increment unread count if message is from another user
+      if (entry.username !== username) {
+        incrementUnreadCount();
+      }
+    };
+
+    const onChatHistory = (messages: { username: string; message: string; timestamp?: string }[]) => {
+      setChatMessages(messages);
+      // Reset unread count when loading chat history (sidebar is open)
+      resetUnreadCount();
     };
     
     const attachListeners = () => {
@@ -46,8 +59,10 @@ const App = () => {
       
       socket.off("user_update");
       socket.off("receive_chat");
+      socket.off("chat_history");
       socket.on("user_update", onUsers);
       socket.on("receive_chat", onReceiveChat);
+      socket.on("chat_history", onChatHistory);
       
       if (socket.connected) {
         socket.emit("get_users");
@@ -65,8 +80,9 @@ const App = () => {
     return () => {
       socket?.off("user_update", onUsers);
       socket?.off("receive_chat", onReceiveChat);
+      socket?.off("chat_history", onChatHistory);
     };
-  }, [username, setUsers, addChatMessage]);
+  }, [username, setUsers, addChatMessage, setChatMessages, incrementUnreadCount, resetUnreadCount]);
 
   if (!username) {
     return <JoinForm />;

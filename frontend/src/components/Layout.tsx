@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDiagramStore } from "@/store/useDiagramStore";
 
 interface LayoutProps {
   left?: React.ReactNode;
@@ -10,6 +11,37 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const unreadMessageCount = useDiagramStore((state) => state.unreadMessageCount);
+  const resetUnreadCount = useDiagramStore((state) => state.resetUnreadCount);
+
+  const handleOpenRightSidebar = () => {
+    setShowRightSidebar(true);
+    resetUnreadCount();
+  };
+
+  // Reset unread count when sidebar is open
+  useEffect(() => {
+    if (showRightSidebar) {
+      resetUnreadCount();
+    }
+  }, [showRightSidebar, resetUnreadCount]);
+
+  // Reset unread count on desktop where sidebar is always visible
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        resetUnreadCount();
+      }
+    };
+    
+    // Check on mount
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      resetUnreadCount();
+    }
+    
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [resetUnreadCount]);
 
   return (
     <div className="flex h-screen w-full bg-gray-50 text-gray-900 overflow-hidden">
@@ -62,8 +94,8 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
       )}
 
       {/* Mobile Sidebar Toggle Buttons */}
-      <div className="fixed bottom-24 sm:bottom-28 left-4 right-4 flex justify-between md:hidden z-[10060] pointer-events-none">
-        {left && (
+      <div className="fixed bottom-24 sm:bottom-28 left-4 right-4 flex justify-between md:hidden z-[10030] pointer-events-none">
+        {left && !showLeftSidebar && (
           <button
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}
             className="bg-white shadow-lg rounded-full p-3 border border-gray-200 pointer-events-auto hover:bg-gray-50 transition-colors"
@@ -74,15 +106,20 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
             </svg>
           </button>
         )}
-        {right && (
+        {right && !showRightSidebar && (
           <button
-            onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="bg-white shadow-lg rounded-full p-3 border border-gray-200 pointer-events-auto hover:bg-gray-50 transition-colors"
+            onClick={handleOpenRightSidebar}
+            className="relative bg-white shadow-lg rounded-full p-3 border border-gray-200 pointer-events-auto hover:bg-gray-50 transition-colors"
             aria-label="Toggle chat"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
+            {unreadMessageCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+                {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+              </span>
+            )}
           </button>
         )}
       </div>

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { socket } from "@/services/socket";
 import Button from "./ui/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
@@ -10,11 +11,21 @@ interface ChatSidebarProps {
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
   const chat = useDiagramStore((state) => state.chat);
+  const username = useDiagramStore((state) => state.username);
   const [message, setMessage] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chat]);
 
   const sendMessage = () => {
-    if (!message.trim()) return;
-    // TODO: emit to backend
+    if (!message.trim() || !socket?.connected) return;
+    socket.emit("send_chat", { message: message.trim() });
     setMessage("");
   };
 
@@ -34,16 +45,38 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
         )}
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 mb-3 md:mb-4 min-h-0">
-        {chat.length === 0 ? (
-          <div className="text-sm text-gray-500 text-center py-4">No messages yet</div>
-        ) : (
-          chat.map((msg, idx) => (
-            <div key={idx} className="text-xs md:text-sm bg-gray-100 p-2 md:p-3 rounded-lg">
-              <strong className="text-blue-600">{msg.username}: </strong>
-              <span className="text-gray-800">{msg.message}</span>
-            </div>
-          ))
-        )}
+        {/* Chat Messages Section */}
+        <div className="space-y-2">
+          {chat.length === 0 ? (
+            <div className="text-sm text-gray-500 text-center py-4">No messages yet</div>
+          ) : (
+            chat.map((msg, idx) => {
+              const isOwnMessage = msg.username === username;
+              return (
+                <div
+                  key={idx}
+                  className={`text-xs md:text-sm p-2 md:p-3 rounded-lg ${
+                    isOwnMessage
+                      ? "bg-blue-500 text-white ml-4"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      {!isOwnMessage && (
+                        <strong className={`block mb-1 ${isOwnMessage ? "text-white" : "text-blue-600"}`}>
+                          {msg.username}
+                        </strong>
+                      )}
+                      <span>{msg.message}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={chatEndRef} />
+        </div>
       </div>
       <div className="flex gap-2">
         <input
@@ -51,7 +84,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
           placeholder="Type a message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
         />
         <Button
           variant="primary"
