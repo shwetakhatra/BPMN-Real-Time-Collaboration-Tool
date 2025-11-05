@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
             />
           )}
           <aside
-            className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+            className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
               showLeftSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             }`}
           >
@@ -35,9 +35,9 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="flex-1 overflow-hidden relative">{children}</div>
-        {bottom && <footer className="border-t border-gray-200 bg-white z-10">{bottom}</footer>}
+      <main className="flex-1 flex flex-col min-w-0 w-0 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative w-full h-full">{children}</div>
+        {bottom && <footer className="border-t border-gray-200 bg-white z-10 flex-shrink-0">{bottom}</footer>}
       </main>
 
       {/* Right Sidebar - Hidden on mobile, collapsible on tablet */}
@@ -51,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
             />
           )}
           <aside
-            className={`fixed md:static inset-y-0 right-0 z-50 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out ${
+            className={`fixed md:static inset-y-0 right-0 z-50 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
               showRightSidebar ? "translate-x-0" : "translate-x-full md:translate-x-0"
             }`}
           >

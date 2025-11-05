@@ -8,3 +8,10 @@ class LockPayload(BaseModel):
 
 class ChatMessagePayload(BaseModel):
     message: str
+
+class CursorPositionPayload(BaseModel):
+    x: float
+    y: float
+
+class EditingPayload(BaseModel):
+    element_id: str | None = None
