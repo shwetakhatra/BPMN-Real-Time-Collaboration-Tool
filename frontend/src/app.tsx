@@ -8,6 +8,7 @@ import JoinForm from "./components/JoinForm";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
 import { normalizeUsers } from "@/utils/userUtils";
+import type { SocketEvents, User, ChatMessage } from "@/types/socket";
 
 const App = () => {
   const username = useDiagramStore((s) => s.username);
@@ -20,18 +21,18 @@ const App = () => {
   useEffect(() => {
     if (!username) return;
     
-    const onUsers = (users: { username: string }[] | string[]) => {
+    const onUsers = (users: SocketEvents["user_update"]) => {
       setUsers(normalizeUsers(users));
     };
     
-    const onReceiveChat = (entry: { username: string; message: string; timestamp?: string }) => {
+    const onReceiveChat = (entry: SocketEvents["receive_chat"]) => {
       addChatMessage(entry);
       if (entry.username !== username) {
         incrementUnreadCount();
       }
     };
 
-    const onChatHistory = (messages: { username: string; message: string; timestamp?: string }[]) => {
+    const onChatHistory = (messages: SocketEvents["chat_history"]) => {
       setChatMessages(messages);
       resetUnreadCount();
     };

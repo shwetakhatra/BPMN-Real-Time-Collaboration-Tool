@@ -1,20 +1,6 @@
 // src/store/useDiagramStore.ts
 import { create } from "zustand";
-
-interface User {
-  username: string;
-}
-
-interface ChatMessage {
-  username: string;
-  message: string;
-  timestamp?: string;
-}
-
-interface ActivityLog {
-  timestamp: string;
-  message: string;
-}
+import type { User, ChatMessage, ActivityLog } from "@/types/socket";
 
 interface DiagramStore {
   username: string | null;

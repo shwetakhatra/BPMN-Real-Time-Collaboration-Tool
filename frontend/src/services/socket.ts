@@ -1,4 +1,3 @@
-// src/services/socket.ts
 import io from "socket.io-client";
 
 export let socket: ReturnType<typeof io> | null = null;

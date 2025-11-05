@@ -35,7 +35,7 @@ const Toolbar = () => {
   };
 
   const handleSaveVersion = async () => {
-    const exportXML = (window as any).exportDiagramXML;
+    const exportXML = window.exportDiagramXML;
     if (!exportXML) return;
 
     try {
@@ -51,7 +51,7 @@ const Toolbar = () => {
   };
 
   const handleAISummary = async () => {
-    const exportXML = (window as any).exportDiagramXML;
+    const exportXML = window.exportDiagramXML;
     if (!exportXML) return;
 
     setIsLoading(true);
@@ -80,7 +80,7 @@ const Toolbar = () => {
   };
 
   const handleRefresh = () => {
-    const syncDiagram = (window as any).syncDiagram;
+    const syncDiagram = window.syncDiagram;
     if (syncDiagram && !isRefreshing) {
       setIsRefreshing(true);
       syncDiagram();

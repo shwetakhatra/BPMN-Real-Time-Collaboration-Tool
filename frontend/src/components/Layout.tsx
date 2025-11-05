@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
               showLeftSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             }`}
           >
-            {React.isValidElement(left) && React.cloneElement(left, { onClose: () => setShowLeftSidebar(false) })}
+            {React.isValidElement(left) && React.cloneElement(left, { onClose: () => setShowLeftSidebar(false) } as { onClose?: () => void })}
             {!React.isValidElement(left) && left}
           </aside>
         </>
@@ -87,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
               showRightSidebar ? "translate-x-0" : "translate-x-full md:translate-x-0"
             }`}
           >
-            {React.isValidElement(right) && React.cloneElement(right, { onClose: () => setShowRightSidebar(false) })}
+            {React.isValidElement(right) && React.cloneElement(right, { onClose: () => setShowRightSidebar(false) } as { onClose?: () => void })}
             {!React.isValidElement(right) && right}
           </aside>
         </>
