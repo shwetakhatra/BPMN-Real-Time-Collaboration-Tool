@@ -3,29 +3,12 @@ import BpmnModeler from "bpmn-js/lib/Modeler";
 import type Canvas from "diagram-js/lib/core/Canvas";
 import { socket } from "@/services/socket";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { INITIAL_XML, CURSOR_UPDATE_DELAY, SAVE_DEBOUNCE_DELAY, MODELER_INIT_DELAY, CONTAINER_CHECK_INTERVAL } from "@/utils/diagramUtils";
+import { getColorFromUsername } from "@/utils/colorUtils";
 
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn.css";
 import "bpmn-js/dist/assets/bpmn-js.css";
-
-const INITIAL_XML = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_1"/>
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36"/>
-      </bpmndi:BPMNShape>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`;
-
-const CURSOR_UPDATE_DELAY = 30;
-const SAVE_DEBOUNCE_DELAY = 300;
-const MODELER_INIT_DELAY = 300;
-const CONTAINER_CHECK_INTERVAL = 100;
 
 const DiagramCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -99,13 +82,28 @@ const DiagramCanvas: React.FC = () => {
     updateTimeoutRef.current = setTimeout(saveDiagram, SAVE_DEBOUNCE_DELAY);
   }, [saveDiagram]);
 
-  const getColorFromUsername = useCallback((name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
-  }, []);
+
+  const createEditingMarker = (color: string): string => {
+    return `
+      <div class="editing-marker" style="
+        background: ${color};
+        color: white;
+        padding: 6px;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        border: 2px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+      ">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+    `;
+  };
 
   const updateEditingMarkers = useCallback(() => {
     if (!modelerRef.current || !username) return;
@@ -113,63 +111,35 @@ const DiagramCanvas: React.FC = () => {
     const overlays = modelerRef.current.get("overlays") as any;
     const editingElements = useDiagramStore.getState().editingElements;
     
-    // Remove overlays for elements no longer being edited
     editingOverlaysRef.current.forEach((overlayId, elementId) => {
       if (!editingElements[elementId] || editingElements[elementId] === username) {
         try {
-          if (overlays?.remove) {
-            overlays.remove(overlayId);
-          }
+          overlays?.remove?.(overlayId);
           editingOverlaysRef.current.delete(elementId);
-        } catch (e) {
-          // Overlay might already be removed
+        } catch {
+          // Overlay already removed
         }
       }
     });
     
-    // Add overlays for elements being edited by others
     Object.entries(editingElements).forEach(([elementId, editorUsername]) => {
-      if (editorUsername === username) return; // Skip own editing
+      if (editorUsername === username || editingOverlaysRef.current.has(elementId)) return;
       
-      if (!editingOverlaysRef.current.has(elementId)) {
-        try {
-          const color = getColorFromUsername(editorUsername);
-          const overlayHtml = `
-            <div class="editing-marker" style="
-              background: ${color};
-              color: white;
-              padding: 6px;
-              border-radius: 50%;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-              border: 2px solid white;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 24px;
-              height: 24px;
-            ">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-          `;
-          
-          if (overlays?.add) {
-            const overlayId = overlays.add(elementId, {
-              position: { top: -10, right: -10 },
-              html: overlayHtml
-            });
-            
-            if (overlayId) {
-              editingOverlaysRef.current.set(elementId, overlayId);
-            }
-          }
-        } catch (e) {
-          // Failed to add editing overlay
+      try {
+        const color = getColorFromUsername(editorUsername);
+        const overlayId = overlays?.add?.(elementId, {
+          position: { top: -10, right: -10 },
+          html: createEditingMarker(color)
+        });
+        
+        if (overlayId) {
+          editingOverlaysRef.current.set(elementId, overlayId);
         }
+      } catch {
+        // Failed to add overlay
       }
     });
-  }, [username, getColorFromUsername]);
+  }, [username]);
 
   const createCursorElement = useCallback((username: string, color: string): HTMLDivElement => {
     const cursorEl = document.createElement("div");
@@ -274,7 +244,6 @@ const DiagramCanvas: React.FC = () => {
       if (data.element_id) {
         setEditingElement(data.element_id, data.username);
       } else {
-        // Clear editing for this user's elements
         const editingElements = useDiagramStore.getState().editingElements;
         Object.entries(editingElements).forEach(([elementId, editorUsername]) => {
           if (editorUsername === data.username) {
@@ -282,8 +251,6 @@ const DiagramCanvas: React.FC = () => {
           }
         });
       }
-      
-      // Update markers after a short delay to ensure DOM is ready
       setTimeout(() => updateEditingMarkers(), 100);
     };
 
@@ -339,28 +306,24 @@ const DiagramCanvas: React.FC = () => {
         };
         eventBus.on("commandStack.changed", changeHandler);
 
-        // Track element selection for editing detection
         const selectionHandler = () => {
           if (!socket?.connected || !username) return;
           
           const selection = modelerRef.current?.get("selection") as any;
           const selectedElement = selection?.get()?.[0];
           
+          if (editingTimeoutRef.current) {
+            clearTimeout(editingTimeoutRef.current);
+          }
+          
           if (selectedElement) {
             const elementId = selectedElement.id;
             
-            // Clear previous editing timeout
-            if (editingTimeoutRef.current) {
-              clearTimeout(editingTimeoutRef.current);
-            }
-            
-            // Clear previous editing element
             if (currentEditingElementRef.current && currentEditingElementRef.current !== elementId) {
               socket.emit("user_editing", { element_id: null });
               setEditingElement(currentEditingElementRef.current, null);
             }
             
-            // Set new editing element after a short delay
             editingTimeoutRef.current = setTimeout(() => {
               if (socket?.connected && username) {
                 socket.emit("user_editing", { element_id: elementId });
@@ -369,16 +332,10 @@ const DiagramCanvas: React.FC = () => {
               }
             }, 500);
           } else {
-            // Clear editing when nothing is selected
             if (currentEditingElementRef.current) {
-              if (socket?.connected) {
-                socket.emit("user_editing", { element_id: null });
-              }
+              socket.emit("user_editing", { element_id: null });
               setEditingElement(currentEditingElementRef.current, null);
               currentEditingElementRef.current = null;
-            }
-            if (editingTimeoutRef.current) {
-              clearTimeout(editingTimeoutRef.current);
             }
           }
         };
@@ -520,17 +477,8 @@ const DiagramCanvas: React.FC = () => {
   }, [exportXML, syncDiagram]);
 
   return (
-    <div className="relative w-full h-full bg-white" style={{ overflow: "hidden", position: "relative" }}>
-      <div 
-        ref={containerRef} 
-        className="w-full h-full bjs-container" 
-        style={{ 
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          minHeight: "100%"
-        }} 
-      />
+    <div className="relative w-full h-full bg-white overflow-hidden">
+      <div ref={containerRef} className="w-full h-full bjs-container" />
     </div>
   );
 };

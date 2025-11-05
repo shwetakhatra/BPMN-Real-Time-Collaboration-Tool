@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFloppyDisk, faBrain, faRotateRight, faSignOut, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faFloppyDisk, faBrain, faRotateRight, faSignOut } from "@fortawesome/free-solid-svg-icons";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
 import Button from "./ui/Button";
+import SummaryModal from "./SummaryModal";
 
 const Toolbar = () => {
   const setUsername = useDiagramStore((s) => s.setUsername);
@@ -21,11 +22,21 @@ const Toolbar = () => {
     localStorage.removeItem("username");
   };
 
+  const downloadXML = (xml: string) => {
+    const blob = new Blob([xml], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `bpmn-diagram-${new Date().toISOString().split("T")[0]}.xml`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSaveVersion = async () => {
     const exportXML = (window as any).exportDiagramXML;
-    if (!exportXML) {
-      return;
-    }
+    if (!exportXML) return;
 
     try {
       const xml = await exportXML();
@@ -33,55 +44,47 @@ const Toolbar = () => {
         alert("Failed to export diagram");
         return;
       }
-
-      const blob = new Blob([xml], { type: "application/xml" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `bpmn-diagram-${new Date().toISOString().split("T")[0]}.xml`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
+      downloadXML(xml);
+    } catch {
       alert("Failed to export diagram");
     }
   };
 
   const handleAISummary = async () => {
     const exportXML = (window as any).exportDiagramXML;
-    if (!exportXML) {
-      return;
-    }
+    if (!exportXML) return;
 
     setIsLoading(true);
     try {
       const xml = await exportXML();
       if (!xml) {
         alert("Failed to get diagram XML");
-        setIsLoading(false);
         return;
       }
 
       const response = await fetch("http://127.0.0.1:8000/api/summary", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ xml }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to get summary: ${response.status} ${errorText}`);
-      }
-
+      if (!response.ok) throw new Error(`Failed to get summary: ${response.status}`);
+      
       const data = await response.json();
       setSummary(data.summary || "Unable to generate summary");
-    } catch (err) {
+    } catch {
       alert("Failed to generate summary. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    const syncDiagram = (window as any).syncDiagram;
+    if (syncDiagram && !isRefreshing) {
+      setIsRefreshing(true);
+      syncDiagram();
+      setTimeout(() => setIsRefreshing(false), 1000);
     }
   };
 
@@ -108,14 +111,7 @@ const Toolbar = () => {
           variant="gray"
           icon={faRotateRight}
           iconSpin={isRefreshing}
-          onClick={() => {
-            const syncDiagram = (window as any).syncDiagram;
-            if (syncDiagram && !isRefreshing) {
-              setIsRefreshing(true);
-              syncDiagram();
-              setTimeout(() => setIsRefreshing(false), 1000);
-            }
-          }}
+          onClick={handleRefresh}
           disabled={isRefreshing}
           loadingText="Syncing..."
         >
@@ -131,37 +127,7 @@ const Toolbar = () => {
         Leave
       </Button>
       
-      {summary && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <FontAwesomeIcon icon={faBrain} className="text-purple-500" />
-                Diagram Summary
-              </h3>
-              <button
-                onClick={() => setSummary(null)}
-                className="text-gray-500 hover:text-gray-700 transition-colors p-1"
-                aria-label="Close"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{summary}</p>
-            </div>
-            <div className="flex justify-end p-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => setSummary(null)}
-                className="px-4 py-2"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {summary && <SummaryModal summary={summary} onClose={() => setSummary(null)} />}
     </div>
   );
 };

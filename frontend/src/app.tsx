@@ -7,6 +7,7 @@ import DiagramCanvas from "./components/DiagramCanvas";
 import JoinForm from "./components/JoinForm";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
+import { normalizeUsers } from "@/utils/userUtils";
 
 const App = () => {
   const username = useDiagramStore((s) => s.username);
@@ -20,29 +21,11 @@ const App = () => {
     if (!username) return;
     
     const onUsers = (users: { username: string }[] | string[]) => {
-      if (Array.isArray(users)) {
-        let userList = users.length === 0 
-          ? [] 
-          : typeof (users as any)[0] === "string"
-            ? (users as string[]).map((u) => ({ username: u }))
-            : (users as { username: string }[]);
-        
-        const seen = new Set<string>();
-        userList = userList.filter(user => {
-          if (seen.has(user.username)) {
-            return false;
-          }
-          seen.add(user.username);
-          return true;
-        });
-        
-        setUsers(userList);
-      }
+      setUsers(normalizeUsers(users));
     };
     
     const onReceiveChat = (entry: { username: string; message: string; timestamp?: string }) => {
       addChatMessage(entry);
-      // Increment unread count if message is from another user
       if (entry.username !== username) {
         incrementUnreadCount();
       }
@@ -50,23 +33,17 @@ const App = () => {
 
     const onChatHistory = (messages: { username: string; message: string; timestamp?: string }[]) => {
       setChatMessages(messages);
-      // Reset unread count when loading chat history (sidebar is open)
       resetUnreadCount();
     };
     
     const attachListeners = () => {
       if (!socket) return;
-      
-      socket.off("user_update");
-      socket.off("receive_chat");
-      socket.off("chat_history");
+      socket.off("user_update").off("receive_chat").off("chat_history");
       socket.on("user_update", onUsers);
       socket.on("receive_chat", onReceiveChat);
       socket.on("chat_history", onChatHistory);
       
-      if (socket.connected) {
-        socket.emit("get_users");
-      }
+      if (socket.connected) socket.emit("get_users");
     };
     
     if (socket?.connected) {

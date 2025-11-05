@@ -3,6 +3,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import Button from "./ui/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { getColorFromUsername } from "@/utils/colorUtils";
 
 interface UserSidebarProps {
   onClose?: () => void;
@@ -17,13 +18,6 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onClose }) => {
     const first = parts[0]?.[0] ?? "";
     const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
     return (first + last).toUpperCase() || name.slice(0, 2).toUpperCase();
-  };
-
-  const colorFromName = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 70% 45%)`;
   };
 
   return (
@@ -49,7 +43,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onClose }) => {
         ) : (
           users.map((u, idx) => {
             const isSelf = currentUsername && u.username === currentUsername;
-            const bg = colorFromName(u.username);
+            const bg = getColorFromUsername(u.username);
             return (
               <li
                 key={idx}
