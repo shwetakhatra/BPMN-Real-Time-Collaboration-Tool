@@ -40,9 +40,6 @@ async def get_diagram_summary(request: DiagramSummaryRequest):
         analysis = analyze_bpmn_diagram(request.xml)
         return analysis
     except Exception as e:
-        print(f"Error in get_diagram_summary: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
         return {"summary": f"Error generating summary: {str(e)}", "error": True}
 
 # Register all Socket.IO events

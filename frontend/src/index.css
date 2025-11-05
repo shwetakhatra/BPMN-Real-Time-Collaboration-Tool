@@ -88,6 +88,13 @@
   filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
 }
 
+/* Editing marker overlay styles */
+.editing-marker {
+  pointer-events: none !important;
+  z-index: 1000 !important;
+  animation: fadeIn 0.2s ease-in;
+}
+
 /* Editing badge styles - make it more prominent */
 .editing-badge {
   pointer-events: none;

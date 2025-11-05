@@ -24,7 +24,6 @@ const Toolbar = () => {
   const handleSaveVersion = async () => {
     const exportXML = (window as any).exportDiagramXML;
     if (!exportXML) {
-      console.error("Export function not available");
       return;
     }
 
@@ -45,7 +44,6 @@ const Toolbar = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Failed to save version", err);
       alert("Failed to export diagram");
     }
   };
@@ -53,7 +51,6 @@ const Toolbar = () => {
   const handleAISummary = async () => {
     const exportXML = (window as any).exportDiagramXML;
     if (!exportXML) {
-      console.error("Export function not available");
       return;
     }
 
@@ -76,14 +73,12 @@ const Toolbar = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error:", response.status, errorText);
         throw new Error(`Failed to get summary: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
       setSummary(data.summary || "Unable to generate summary");
     } catch (err) {
-      console.error("Failed to get AI summary", err);
       alert("Failed to generate summary. Please try again.");
     } finally {
       setIsLoading(false);

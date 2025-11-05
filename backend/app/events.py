@@ -53,9 +53,7 @@ def register_events(sio: AsyncServer):
             
             await log_and_broadcast(sio, f"{username} connected")
         except Exception as e:
-            print(f"Connection error: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
+            pass
 
     @sio.event(namespace="/")
     async def disconnect(sid):
@@ -93,9 +91,7 @@ def register_events(sio: AsyncServer):
             await sio.emit("diagram_update", {"xml": current_xml}, skip_sid=sid, namespace="/")
             await log_and_broadcast(sio, f"{user} updated diagram", skip_sid=sid)
         except Exception as e:
-            print(f"Error in update_diagram: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
+            pass
 
     @sio.event(namespace="/")
     async def lock_element(sid, data):
@@ -162,14 +158,10 @@ def register_events(sio: AsyncServer):
         try:
             payload = EditingPayload(**data)
             user = user_manager.get_username(sid)
-            print(f"[Backend] user_editing: {user} editing {payload.element_id}", flush=True)
             # Broadcast editing status to all other clients (exclude sender to avoid duplicate)
             await sio.emit("editing_update", {
                 "username": user,
                 "element_id": payload.element_id
             }, skip_sid=sid, namespace="/")
-            print(f"[Backend] Broadcasted editing_update to all clients (skip_sid={sid})", flush=True)
         except Exception as e:
-            print(f"[Backend] Error in user_editing: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
+            pass

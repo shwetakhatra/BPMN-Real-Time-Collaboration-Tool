@@ -24,6 +24,7 @@ interface DiagramStore {
   unreadMessageCount: number;
   xml: string;
   locks: Record<string, string>; // element_id -> username
+  editingElements: Record<string, string>; // element_id -> username
   setUsername: (username: string | null) => void;
   setUsers: (users: User[]) => void;
   addChatMessage: (msg: ChatMessage) => void;
@@ -35,6 +36,7 @@ interface DiagramStore {
   setXml: (xml: string) => void;
   setLocks: (locks: Record<string, string>) => void;
   updateLock: (elementId: string, username: string | null) => void;
+  setEditingElement: (elementId: string | null, username: string | null) => void;
 }
 
 export const useDiagramStore = create<DiagramStore>((set) => ({
@@ -45,6 +47,7 @@ export const useDiagramStore = create<DiagramStore>((set) => ({
   unreadMessageCount: 0,
   xml: "",
   locks: {},
+  editingElements: {},
   setUsername: (username) => set({ username }),
   setUsers: (users) => set({ users }),
   addChatMessage: (msg) => set((state) => ({ chat: [...state.chat, msg] })),
@@ -64,5 +67,15 @@ export const useDiagramStore = create<DiagramStore>((set) => ({
         delete newLocks[elementId];
       }
       return { locks: newLocks };
+    }),
+  setEditingElement: (elementId, username) =>
+    set((state) => {
+      const newEditing = { ...state.editingElements };
+      if (elementId && username) {
+        newEditing[elementId] = username;
+      } else if (elementId) {
+        delete newEditing[elementId];
+      }
+      return { editingElements: newEditing };
     }),
 }));

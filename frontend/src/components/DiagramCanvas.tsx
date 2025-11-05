@@ -30,12 +30,15 @@ const CONTAINER_CHECK_INTERVAL = 100;
 const DiagramCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
-  const { xml, setXml, username } = useDiagramStore();
+  const { xml, setXml, username, setEditingElement } = useDiagramStore();
   const isUpdatingRef = useRef(false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const xmlRef = useRef(xml);
   const cursorElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editingOverlaysRef = useRef<Map<string, string>>(new Map()); // element_id -> overlay_id
+  const currentEditingElementRef = useRef<string | null>(null);
+  const editingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     xmlRef.current = xml;
@@ -56,7 +59,7 @@ const DiagramCanvas: React.FC = () => {
       
       xmlRef.current = xmlString;
     } catch (err) {
-      console.error("Failed to load BPMN diagram", err);
+      // Failed to load diagram
     } finally {
       setTimeout(() => {
         isUpdatingRef.current = false;
@@ -75,7 +78,7 @@ const DiagramCanvas: React.FC = () => {
         socket.emit("update_diagram", { xml: exportedXml });
       }
     } catch (err) {
-      console.error("Failed to export BPMN diagram", err);
+      // Failed to export diagram
     }
   }, [setXml]);
 
@@ -85,7 +88,6 @@ const DiagramCanvas: React.FC = () => {
       const { xml: exportedXml } = await modelerRef.current.saveXML({ format: true });
       return exportedXml || null;
     } catch (err) {
-      console.error("Failed to export XML", err);
       return null;
     }
   }, []);
@@ -104,6 +106,70 @@ const DiagramCanvas: React.FC = () => {
     }
     return `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
   }, []);
+
+  const updateEditingMarkers = useCallback(() => {
+    if (!modelerRef.current || !username) return;
+    
+    const overlays = modelerRef.current.get("overlays") as any;
+    const editingElements = useDiagramStore.getState().editingElements;
+    
+    // Remove overlays for elements no longer being edited
+    editingOverlaysRef.current.forEach((overlayId, elementId) => {
+      if (!editingElements[elementId] || editingElements[elementId] === username) {
+        try {
+          if (overlays?.remove) {
+            overlays.remove(overlayId);
+          }
+          editingOverlaysRef.current.delete(elementId);
+        } catch (e) {
+          // Overlay might already be removed
+        }
+      }
+    });
+    
+    // Add overlays for elements being edited by others
+    Object.entries(editingElements).forEach(([elementId, editorUsername]) => {
+      if (editorUsername === username) return; // Skip own editing
+      
+      if (!editingOverlaysRef.current.has(elementId)) {
+        try {
+          const color = getColorFromUsername(editorUsername);
+          const overlayHtml = `
+            <div class="editing-marker" style="
+              background: ${color};
+              color: white;
+              padding: 6px;
+              border-radius: 50%;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+              border: 2px solid white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 24px;
+              height: 24px;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+          `;
+          
+          if (overlays?.add) {
+            const overlayId = overlays.add(elementId, {
+              position: { top: -10, right: -10 },
+              html: overlayHtml
+            });
+            
+            if (overlayId) {
+              editingOverlaysRef.current.set(elementId, overlayId);
+            }
+          }
+        } catch (e) {
+          // Failed to add editing overlay
+        }
+      }
+    });
+  }, [username, getColorFromUsername]);
 
   const createCursorElement = useCallback((username: string, color: string): HTMLDivElement => {
     const cursorEl = document.createElement("div");
@@ -202,10 +268,31 @@ const DiagramCanvas: React.FC = () => {
       loadDiagram(data.xml, true);
     };
 
+    const onEditingUpdate = (data: { username: string; element_id: string | null }) => {
+      if (!data || data.username === username) return;
+      
+      if (data.element_id) {
+        setEditingElement(data.element_id, data.username);
+      } else {
+        // Clear editing for this user's elements
+        const editingElements = useDiagramStore.getState().editingElements;
+        Object.entries(editingElements).forEach(([elementId, editorUsername]) => {
+          if (editorUsername === data.username) {
+            setEditingElement(elementId, null);
+          }
+        });
+      }
+      
+      // Update markers after a short delay to ensure DOM is ready
+      setTimeout(() => updateEditingMarkers(), 100);
+    };
+
     const attachListeners = () => {
       if (socket) {
         socket.off("diagram_update", onDiagramUpdate);
+        socket.off("editing_update", onEditingUpdate);
         socket.on("diagram_update", onDiagramUpdate);
+        socket.on("editing_update", onEditingUpdate);
       }
     };
 
@@ -215,10 +302,13 @@ const DiagramCanvas: React.FC = () => {
     window.addEventListener("socket-ready", handleSocketReady);
 
     return () => {
-      if (socket) socket.off("diagram_update", onDiagramUpdate);
+      if (socket) {
+        socket.off("diagram_update", onDiagramUpdate);
+        socket.off("editing_update", onEditingUpdate);
+      }
       window.removeEventListener("socket-ready", handleSocketReady);
     };
-  }, [socket, loadDiagram]);
+  }, [socket, loadDiagram, username, setEditingElement, updateEditingMarkers]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -248,6 +338,57 @@ const DiagramCanvas: React.FC = () => {
           if (!isUpdatingRef.current) debouncedSave();
         };
         eventBus.on("commandStack.changed", changeHandler);
+
+        // Track element selection for editing detection
+        const selectionHandler = () => {
+          if (!socket?.connected || !username) return;
+          
+          const selection = modelerRef.current?.get("selection") as any;
+          const selectedElement = selection?.get()?.[0];
+          
+          if (selectedElement) {
+            const elementId = selectedElement.id;
+            
+            // Clear previous editing timeout
+            if (editingTimeoutRef.current) {
+              clearTimeout(editingTimeoutRef.current);
+            }
+            
+            // Clear previous editing element
+            if (currentEditingElementRef.current && currentEditingElementRef.current !== elementId) {
+              socket.emit("user_editing", { element_id: null });
+              setEditingElement(currentEditingElementRef.current, null);
+            }
+            
+            // Set new editing element after a short delay
+            editingTimeoutRef.current = setTimeout(() => {
+              if (socket?.connected && username) {
+                socket.emit("user_editing", { element_id: elementId });
+                setEditingElement(elementId, username);
+                currentEditingElementRef.current = elementId;
+              }
+            }, 500);
+          } else {
+            // Clear editing when nothing is selected
+            if (currentEditingElementRef.current) {
+              if (socket?.connected) {
+                socket.emit("user_editing", { element_id: null });
+              }
+              setEditingElement(currentEditingElementRef.current, null);
+              currentEditingElementRef.current = null;
+            }
+            if (editingTimeoutRef.current) {
+              clearTimeout(editingTimeoutRef.current);
+            }
+          }
+        };
+        
+        eventBus.on("selection.changed", selectionHandler);
+        
+        // Cleanup on unmount
+        return () => {
+          eventBus.off("selection.changed", selectionHandler);
+        };
       }, MODELER_INIT_DELAY);
     };
 
@@ -256,9 +397,26 @@ const DiagramCanvas: React.FC = () => {
     return () => {
       if (modelerRef.current) {
         const eventBus = modelerRef.current.get("eventBus") as any;
-        if (eventBus) eventBus.off("commandStack.changed");
+        if (eventBus) {
+          eventBus.off("commandStack.changed");
+          eventBus.off("selection.changed");
+        }
+        
+        // Clean up editing overlays
+        const overlays = modelerRef.current.get("overlays") as any;
+        editingOverlaysRef.current.forEach((overlayId) => {
+          try {
+            if (overlays?.remove) {
+              overlays.remove(overlayId);
+            }
+          } catch (e) {
+            // Ignore
+          }
+        });
+        editingOverlaysRef.current.clear();
       }
       if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+      if (editingTimeoutRef.current) clearTimeout(editingTimeoutRef.current);
       modelerRef.current?.destroy();
     };
   }, []);
@@ -333,6 +491,24 @@ const DiagramCanvas: React.FC = () => {
     if (!socket?.connected) return;
     socket.emit("sync_diagram");
   }, [socket]);
+
+  // Update editing markers when editing elements change
+  useEffect(() => {
+    const unsubscribe = useDiagramStore.subscribe((state) => {
+      if (state.editingElements) {
+        updateEditingMarkers();
+      }
+    });
+    
+    return unsubscribe;
+  }, [updateEditingMarkers]);
+
+  // Update markers after diagram loads
+  useEffect(() => {
+    if (modelerRef.current) {
+      setTimeout(() => updateEditingMarkers(), 500);
+    }
+  }, [xml, updateEditingMarkers]);
 
   useEffect(() => {
     (window as any).exportDiagramXML = exportXML;
