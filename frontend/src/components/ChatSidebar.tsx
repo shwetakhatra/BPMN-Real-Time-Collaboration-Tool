@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
 import Button from "./ui/Button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 
 interface ChatSidebarProps {

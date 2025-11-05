@@ -2,13 +2,15 @@ import io from "socket.io-client";
 
 export let socket: ReturnType<typeof io> | null = null;
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 export function initSocket(username: string) {
   if (socket?.connected) {
     socket.disconnect();
     socket = null;
   }
   
-  socket = io("http://127.0.0.1:8000", {
+  socket = io(API_URL, {
     transports: ["websocket"],
     auth: { username },
     query: { username },
