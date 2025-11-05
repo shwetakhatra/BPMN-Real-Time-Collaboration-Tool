@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import Button from "./ui/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 
 interface ChatSidebarProps {
   onClose?: () => void;
@@ -20,15 +23,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h2 className="text-base md:text-lg font-semibold">Chat</h2>
         {onClose && (
-          <button
+          <Button
+            variant="icon"
             onClick={onClose}
-            className="md:hidden p-1 rounded-md hover:bg-gray-200 transition-colors"
+            icon={faTimes}
+            iconSize="sm"
+            className="md:hidden"
             aria-label="Close sidebar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          />
         )}
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 mb-3 md:mb-4 min-h-0">
@@ -51,13 +53,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button
-          className="px-4 md:px-5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+        <Button
+          variant="primary"
+          icon={faPaperPlane}
+          iconSize="sm"
           onClick={sendMessage}
           disabled={!message.trim()}
+          className="px-4 md:px-5 text-sm font-medium"
         >
           Send
-        </button>
+        </Button>
       </div>
     </div>
   );

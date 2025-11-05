@@ -1,5 +1,8 @@
 import React from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import Button from "./ui/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 interface UserSidebarProps {
   onClose?: () => void;
@@ -28,15 +31,14 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onClose }) => {
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h2 className="text-base md:text-lg font-semibold">Active Users</h2>
         {onClose && (
-          <button
+          <Button
+            variant="icon"
             onClick={onClose}
-            className="md:hidden p-1 rounded-md hover:bg-gray-200 transition-colors"
+            icon={faTimes}
+            iconSize="sm"
+            className="md:hidden"
             aria-label="Close sidebar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          />
         )}
       </div>
       <ul className="space-y-1.5 md:space-y-2 flex-1 overflow-y-auto">

@@ -79,6 +79,17 @@ const DiagramCanvas: React.FC = () => {
     }
   }, [setXml]);
 
+  const exportXML = useCallback(async (): Promise<string | null> => {
+    if (!modelerRef.current) return null;
+    try {
+      const { xml: exportedXml } = await modelerRef.current.saveXML({ format: true });
+      return exportedXml || null;
+    } catch (err) {
+      console.error("Failed to export XML", err);
+      return null;
+    }
+  }, []);
+
   const debouncedSave = useCallback(() => {
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
@@ -317,6 +328,20 @@ const DiagramCanvas: React.FC = () => {
       }
     };
   }, [socket, username, handleMouseMove, updateRemoteCursor]);
+
+  const syncDiagram = useCallback(() => {
+    if (!socket?.connected) return;
+    socket.emit("sync_diagram");
+  }, [socket]);
+
+  useEffect(() => {
+    (window as any).exportDiagramXML = exportXML;
+    (window as any).syncDiagram = syncDiagram;
+    return () => {
+      delete (window as any).exportDiagramXML;
+      delete (window as any).syncDiagram;
+    };
+  }, [exportXML, syncDiagram]);
 
   return (
     <div className="relative w-full h-full bg-white" style={{ overflow: "hidden", position: "relative" }}>

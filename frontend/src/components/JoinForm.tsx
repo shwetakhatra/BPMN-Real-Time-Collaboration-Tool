@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { initSocket, socket } from "@/services/socket";
+import Button from "./ui/Button";
 
 const JoinForm: React.FC = () => {
   const [input, setInput] = useState("");
@@ -49,17 +50,15 @@ const JoinForm: React.FC = () => {
               autoFocus
             />
           </div>
-          <button
+          <Button
             type="submit"
+            variant="primary"
             disabled={isDisabled}
-            className={`w-full py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${
-              isDisabled
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg"
-            }`}
+            fullWidth
+            className="py-2.5 sm:py-3 text-sm sm:text-base font-medium shadow-md hover:shadow-lg"
           >
             Join
-          </button>
+          </Button>
         </form>
       </div>
     </div>
