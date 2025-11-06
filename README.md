@@ -1,6 +1,6 @@
 # BPMN Real-Time Collaboration Tool
 
-A modern, real-time collaborative BPMN (Business Process Model and Notation) diagram editor that enables multiple users to work together on process diagrams simultaneously. Built with React, TypeScript, FastAPI, and Socket.IO for seamless real-time collaboration.
+A collaborative BPMN (Business Process Model and Notation) diagram editor that enables multiple users to work together on process diagrams simultaneously. Built with React, TypeScript, FastAPI, and Socket.IO for seamless real-time collaboration.
 
 ## 📋 Description
 
