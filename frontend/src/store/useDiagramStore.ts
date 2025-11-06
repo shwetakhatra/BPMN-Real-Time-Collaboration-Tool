@@ -1,4 +1,3 @@
-// src/store/useDiagramStore.ts
 import { create } from "zustand";
 import type { User, ChatMessage, ActivityLog } from "@/types/socket";
 
