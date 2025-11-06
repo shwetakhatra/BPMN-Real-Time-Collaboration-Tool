@@ -19,7 +19,6 @@ const App = () => {
   const incrementUnreadCount = useDiagramStore((s) => s.incrementUnreadCount);
   const resetUnreadCount = useDiagramStore((s) => s.resetUnreadCount);
 
-  // Restore session on mount if username exists in store (from localStorage)
   useEffect(() => {
     if (username && !socket?.connected) {
       initSocket(username);
@@ -27,7 +26,6 @@ const App = () => {
     }
   }, [username, setUsers]);
 
-  // Socket event handlers
   const handleUsersUpdate = useCallback((users: SocketEvents["user_update"]) => {
     setUsers(normalizeUsers(users));
   }, [setUsers]);
@@ -44,7 +42,6 @@ const App = () => {
     resetUnreadCount();
   }, [setChatMessages, resetUnreadCount]);
 
-  // Use reusable socket listeners hook
   useSocketListeners({
     onUsersUpdate: handleUsersUpdate,
     onChatMessage: handleChatMessage,

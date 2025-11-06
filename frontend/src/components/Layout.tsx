@@ -20,14 +20,12 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
     resetUnreadCount();
   };
 
-  // Reset unread count when sidebar is open
   useEffect(() => {
     if (showRightSidebar) {
       resetUnreadCount();
     }
   }, [showRightSidebar, resetUnreadCount]);
 
-  // Reset unread count on desktop where sidebar is always visible
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= BREAKPOINTS.MOBILE) {
@@ -45,10 +43,8 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
 
   return (
     <div className="flex h-screen w-full bg-gray-50 text-gray-900 overflow-hidden">
-      {/* Left Sidebar - Hidden on mobile, collapsible on tablet */}
       {left && (
         <>
-          {/* Mobile overlay */}
           {showLeftSidebar && (
             <div
               className="fixed inset-0 bg-black bg-opacity-50 md:hidden"
@@ -68,16 +64,13 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
         </>
       )}
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 w-0 overflow-hidden">
         <div className="flex-1 overflow-hidden relative w-full h-full">{children}</div>
         {bottom && <footer className="border-t border-gray-200 bg-white z-10 flex-shrink-0">{bottom}</footer>}
       </main>
 
-      {/* Right Sidebar - Hidden on mobile, collapsible on tablet */}
       {right && (
         <>
-          {/* Mobile overlay */}
           {showRightSidebar && (
             <div
               className="fixed inset-0 bg-black bg-opacity-50 md:hidden"
@@ -97,7 +90,6 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
         </>
       )}
 
-      {/* Mobile Sidebar Toggle Buttons */}
       <div 
         className="fixed bottom-24 sm:bottom-28 left-4 right-4 flex justify-between md:hidden pointer-events-none"
         style={{ zIndex: Z_INDEX.MOBILE_BUTTONS }}

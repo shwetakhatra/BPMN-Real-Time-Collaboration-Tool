@@ -47,7 +47,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
         )}
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 mb-3 md:mb-4 min-h-0">
-        {/* Chat Messages Section */}
         <div className="space-y-2">
           {chat.length === 0 ? (
             <div className="text-sm text-gray-500 text-center py-4">No messages yet</div>
