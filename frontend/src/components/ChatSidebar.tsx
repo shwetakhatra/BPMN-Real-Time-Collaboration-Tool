@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
+import { SOCKET_EVENTS } from "@/constants";
 import Button from "./ui/Button";
 import { faTimes, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 
@@ -24,7 +25,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 
   const sendMessage = () => {
     if (!message.trim() || !socket?.connected) return;
-    socket.emit("send_chat", { message: message.trim() });
+    socket.emit(SOCKET_EVENTS.SEND_CHAT, { message: message.trim() });
     setMessage("");
   };
 

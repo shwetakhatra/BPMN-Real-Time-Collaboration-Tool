@@ -4,6 +4,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { useBpmnModeler } from "@/lib/hooks/useBpmnModeler";
 import { useRemoteCursors } from "@/lib/hooks/useRemoteCursors";
 import { useEditingMarkers } from "@/lib/hooks/useEditingMarkers";
+import { SOCKET_EVENTS } from "@/constants";
 import type { SocketEvents } from "@/types/socket";
 
 import "bpmn-js/dist/assets/diagram-js.css";
@@ -30,7 +31,7 @@ const DiagramCanvas: React.FC = () => {
 
   const syncDiagram = useCallback(() => {
     if (!socket?.connected) return;
-    socket.emit("sync_diagram");
+    socket.emit(SOCKET_EVENTS.SYNC_DIAGRAM);
   }, []);
 
   useEffect(() => {
@@ -57,10 +58,10 @@ const DiagramCanvas: React.FC = () => {
 
     const attachListeners = () => {
       if (socket) {
-        socket.off("diagram_update", onDiagramUpdate);
-        socket.off("editing_update", onEditingUpdate);
-        socket.on("diagram_update", onDiagramUpdate);
-        socket.on("editing_update", onEditingUpdate);
+        socket.off(SOCKET_EVENTS.DIAGRAM_UPDATE, onDiagramUpdate);
+        socket.off(SOCKET_EVENTS.EDITING_UPDATE, onEditingUpdate);
+        socket.on(SOCKET_EVENTS.DIAGRAM_UPDATE, onDiagramUpdate);
+        socket.on(SOCKET_EVENTS.EDITING_UPDATE, onEditingUpdate);
       }
     };
 
@@ -71,8 +72,8 @@ const DiagramCanvas: React.FC = () => {
 
     return () => {
       if (socket) {
-        socket.off("diagram_update", onDiagramUpdate);
-        socket.off("editing_update", onEditingUpdate);
+        socket.off(SOCKET_EVENTS.DIAGRAM_UPDATE, onDiagramUpdate);
+        socket.off(SOCKET_EVENTS.EDITING_UPDATE, onEditingUpdate);
       }
       window.removeEventListener("socket-ready", handleSocketReady);
     };
@@ -94,8 +95,8 @@ const DiagramCanvas: React.FC = () => {
   }, [exportXML, syncDiagram]);
 
   return (
-    <div className="relative w-full h-full bg-white overflow-hidden">
-      <div ref={containerRef} className="w-full h-full bjs-container" />
+    <div className="relative w-full h-full bg-white overflow-hidden outline-none focus:outline-none">
+      <div ref={containerRef} className="w-full h-full bjs-container outline-none focus:outline-none" tabIndex={-1} />
     </div>
   );
 };

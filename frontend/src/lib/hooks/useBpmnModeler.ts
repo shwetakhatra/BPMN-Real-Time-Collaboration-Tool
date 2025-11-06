@@ -3,6 +3,7 @@ import { BpmnModelerWrapper } from "../bpmn";
 import { INITIAL_XML, MODELER_INIT_DELAY, CONTAINER_CHECK_INTERVAL, SAVE_DEBOUNCE_DELAY } from "@/utils/diagramUtils";
 import { socket } from "@/services/socket";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { SOCKET_EVENTS } from "@/constants";
 
 interface UseBpmnModelerOptions {
   containerRef: RefObject<HTMLDivElement | null>;
@@ -60,7 +61,7 @@ export const useBpmnModeler = ({
       if (exportedXml && exportedXml !== xmlRef.current) {
         setXml(exportedXml);
         xmlRef.current = exportedXml;
-        socket.emit("update_diagram", { xml: exportedXml });
+        socket.emit(SOCKET_EVENTS.UPDATE_DIAGRAM, { xml: exportedXml });
         onSave?.(exportedXml);
       }
     } catch {
@@ -130,13 +131,13 @@ export const useBpmnModeler = ({
             const elementId = selectedElement.id;
             
             if (currentEditingElementRef.current && currentEditingElementRef.current !== elementId) {
-              socket.emit("user_editing", { element_id: null });
+              socket.emit(SOCKET_EVENTS.USER_EDITING, { element_id: null });
               setEditingElement(currentEditingElementRef.current, null);
             }
             
             editingTimeoutRef.current = setTimeout(() => {
               if (socket?.connected && username) {
-                socket.emit("user_editing", { element_id: elementId });
+                socket.emit(SOCKET_EVENTS.USER_EDITING, { element_id: elementId });
                 setEditingElement(elementId, username);
                 currentEditingElementRef.current = elementId;
                 onSelectionChange?.(elementId);
@@ -144,7 +145,7 @@ export const useBpmnModeler = ({
             }, 500);
           } else {
             if (currentEditingElementRef.current) {
-              socket.emit("user_editing", { element_id: null });
+              socket.emit(SOCKET_EVENTS.USER_EDITING, { element_id: null });
               setEditingElement(currentEditingElementRef.current, null);
               currentEditingElementRef.current = null;
               onSelectionChange?.(null);

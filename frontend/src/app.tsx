@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import Layout from "./components/Layout";
 import Toolbar from "./components/Toolbar";
 import UserSidebar from "./components/UserSidebar";
@@ -6,9 +6,10 @@ import ChatSidebar from "./components/ChatSidebar";
 import DiagramCanvas from "./components/DiagramCanvas";
 import JoinForm from "./components/JoinForm";
 import { useDiagramStore } from "@/store/useDiagramStore";
-import { socket } from "@/services/socket";
+import { socket, initSocket } from "@/services/socket";
+import { useSocketListeners } from "@/hooks/useSocketListeners";
 import { normalizeUsers } from "@/utils/userUtils";
-import type { SocketEvents, User, ChatMessage } from "@/types/socket";
+import type { SocketEvents } from "@/types/socket";
 
 const App = () => {
   const username = useDiagramStore((s) => s.username);
@@ -18,49 +19,38 @@ const App = () => {
   const incrementUnreadCount = useDiagramStore((s) => s.incrementUnreadCount);
   const resetUnreadCount = useDiagramStore((s) => s.resetUnreadCount);
 
+  // Restore session on mount if username exists in store (from localStorage)
   useEffect(() => {
-    if (!username) return;
-    
-    const onUsers = (users: SocketEvents["user_update"]) => {
-      setUsers(normalizeUsers(users));
-    };
-    
-    const onReceiveChat = (entry: SocketEvents["receive_chat"]) => {
-      addChatMessage(entry);
-      if (entry.username !== username) {
-        incrementUnreadCount();
-      }
-    };
-
-    const onChatHistory = (messages: SocketEvents["chat_history"]) => {
-      setChatMessages(messages);
-      resetUnreadCount();
-    };
-    
-    const attachListeners = () => {
-      if (!socket) return;
-      socket.off("user_update").off("receive_chat").off("chat_history");
-      socket.on("user_update", onUsers);
-      socket.on("receive_chat", onReceiveChat);
-      socket.on("chat_history", onChatHistory);
-      
-      if (socket.connected) socket.emit("get_users");
-    };
-    
-    if (socket?.connected) {
-      attachListeners();
-    } else {
-      const readyHandler = () => attachListeners();
-      window.addEventListener("socket-ready", readyHandler, { once: true });
-      return () => window.removeEventListener("socket-ready", readyHandler);
+    if (username && !socket?.connected) {
+      initSocket(username);
+      setUsers([{ username }]);
     }
-    
-    return () => {
-      socket?.off("user_update", onUsers);
-      socket?.off("receive_chat", onReceiveChat);
-      socket?.off("chat_history", onChatHistory);
-    };
-  }, [username, setUsers, addChatMessage, setChatMessages, incrementUnreadCount, resetUnreadCount]);
+  }, [username, setUsers]);
+
+  // Socket event handlers
+  const handleUsersUpdate = useCallback((users: SocketEvents["user_update"]) => {
+    setUsers(normalizeUsers(users));
+  }, [setUsers]);
+
+  const handleChatMessage = useCallback((entry: SocketEvents["receive_chat"]) => {
+    addChatMessage(entry);
+    if (entry.username !== username) {
+      incrementUnreadCount();
+    }
+  }, [username, addChatMessage, incrementUnreadCount]);
+
+  const handleChatHistory = useCallback((messages: SocketEvents["chat_history"]) => {
+    setChatMessages(messages);
+    resetUnreadCount();
+  }, [setChatMessages, resetUnreadCount]);
+
+  // Use reusable socket listeners hook
+  useSocketListeners({
+    onUsersUpdate: handleUsersUpdate,
+    onChatMessage: handleChatMessage,
+    onChatHistory: handleChatHistory,
+    enabled: !!username,
+  });
 
   if (!username) {
     return <JoinForm />;

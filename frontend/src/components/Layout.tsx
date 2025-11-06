@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { Z_INDEX, BREAKPOINTS } from "@/constants";
 
 interface LayoutProps {
   left?: React.ReactNode;
@@ -29,13 +30,12 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
   // Reset unread count on desktop where sidebar is always visible
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= BREAKPOINTS.MOBILE) {
         resetUnreadCount();
       }
     };
     
-    // Check on mount
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+    if (typeof window !== "undefined" && window.innerWidth >= BREAKPOINTS.MOBILE) {
       resetUnreadCount();
     }
     
@@ -51,14 +51,16 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
           {/* Mobile overlay */}
           {showLeftSidebar && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-[10040] md:hidden"
+              className="fixed inset-0 bg-black bg-opacity-50 md:hidden"
+              style={{ zIndex: Z_INDEX.SIDEBAR_OVERLAY }}
               onClick={() => setShowLeftSidebar(false)}
             />
           )}
           <aside
-            className={`fixed md:static inset-y-0 left-0 z-[10050] w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
+            className={`fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
               showLeftSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             }`}
+            style={{ zIndex: Z_INDEX.SIDEBAR }}
           >
             {React.isValidElement(left) && React.cloneElement(left, { onClose: () => setShowLeftSidebar(false) } as { onClose?: () => void })}
             {!React.isValidElement(left) && left}
@@ -78,14 +80,16 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
           {/* Mobile overlay */}
           {showRightSidebar && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-[10040] md:hidden"
+              className="fixed inset-0 bg-black bg-opacity-50 md:hidden"
+              style={{ zIndex: Z_INDEX.SIDEBAR_OVERLAY }}
               onClick={() => setShowRightSidebar(false)}
             />
           )}
           <aside
-            className={`fixed md:static inset-y-0 right-0 z-[10050] w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
+            className={`fixed md:static inset-y-0 right-0 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex-shrink-0 ${
               showRightSidebar ? "translate-x-0" : "translate-x-full md:translate-x-0"
             }`}
+            style={{ zIndex: Z_INDEX.SIDEBAR }}
           >
             {React.isValidElement(right) && React.cloneElement(right, { onClose: () => setShowRightSidebar(false) } as { onClose?: () => void })}
             {!React.isValidElement(right) && right}
@@ -94,7 +98,10 @@ const Layout: React.FC<LayoutProps> = ({ left, right, bottom, children }) => {
       )}
 
       {/* Mobile Sidebar Toggle Buttons */}
-      <div className="fixed bottom-24 sm:bottom-28 left-4 right-4 flex justify-between md:hidden z-[10030] pointer-events-none">
+      <div 
+        className="fixed bottom-24 sm:bottom-28 left-4 right-4 flex justify-between md:hidden pointer-events-none"
+        style={{ zIndex: Z_INDEX.MOBILE_BUTTONS }}
+      >
         {left && !showLeftSidebar && (
           <button
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}

@@ -19,7 +19,6 @@ const JoinForm: React.FC = () => {
     e?.preventDefault();
     const name = input.trim();
     if (!name) return;
-    localStorage.setItem("username", name);
     setUsername(name);
     initSocket(name);
     setUsers([{ username: name }]);

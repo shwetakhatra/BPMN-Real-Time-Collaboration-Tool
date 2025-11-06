@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure BPMN palette is visible and functional */
+/* ============================================
+   BPMN Canvas Styles
+   ============================================ */
+
+/* BPMN Palette */
 .djs-palette {
   z-index: 1000 !important;
   position: absolute !important;
@@ -13,30 +17,6 @@
   opacity: 1 !important;
 }
 
-.djs-context-pad {
-  z-index: 100 !important;
-}
-
-/* Ensure canvas container is properly sized */
-.bjs-container {
-  width: 100% !important;
-  height: 100% !important;
-  position: relative !important;
-}
-
-/* Ensure the BPMN canvas is interactive */
-.bjs-container svg {
-  pointer-events: auto !important;
-}
-
-/* Ensure the diagram canvas is clickable */
-.djs-container {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Fix palette button styling */
 .djs-palette .entry {
   cursor: pointer !important;
   border: 1px solid #ccc !important;
@@ -53,53 +33,99 @@
   background: #e0e0e0 !important;
 }
 
-/* Ensure canvas is interactive */
-.bjs-container canvas {
-  pointer-events: auto !important;
+.djs-context-pad {
+  z-index: 100 !important;
 }
 
+/* Canvas Containers */
+.bjs-container,
+.djs-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.bjs-container:focus,
+.bjs-container:focus-visible,
+.bjs-container:focus-within,
+.djs-container:focus,
+.djs-container:focus-visible,
+.djs-container:focus-within,
+.bjs-container *:focus,
+.bjs-container *:focus-visible,
+.djs-container *:focus,
+.djs-container *:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Canvas Interactivity */
+.bjs-container svg,
+.bjs-container canvas,
 .bjs-container .djs-element {
   pointer-events: auto !important;
 }
 
+.bjs-container canvas {
+  outline: none !important;
+}
 
-/* Remote cursor styles */
+/* ============================================
+   Remote Cursor Styles
+   ============================================ */
+
 .remote-cursor {
+  position: absolute;
+  pointer-events: none !important;
+  z-index: 10000;
+  transform: translate(-50%, -100%);
   transition: left 0.05s linear, top 0.05s linear;
   will-change: left, top;
-  pointer-events: none !important;
 }
 
 .remote-cursor .cursor-name {
-  animation: fadeIn 0.2s ease-in;
   pointer-events: none;
+  animation: fadeIn 0.2s ease-in;
 }
 
-/* Editing badge styles */
+/* ============================================
+   Editing Marker Styles
+   ============================================ */
+
 .editing-badge {
   pointer-events: none;
-  animation: fadeIn 0.2s ease-in;
+  z-index: 10001 !important;
+  animation: fadeIn 0.2s ease-in, pulse 2s ease-in-out infinite;
 }
 
-/* Editing marker styles for elements */
-.djs-element[class*="editing-"] {
-  outline: 3px solid rgba(255, 193, 7, 0.8) !important;
-  outline-offset: 3px;
-  filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
-}
-
-/* Editing marker overlay styles */
 .editing-marker {
   pointer-events: none !important;
   z-index: 1000 !important;
   animation: fadeIn 0.2s ease-in;
 }
 
-/* Editing badge styles - make it more prominent */
-.editing-badge {
-  pointer-events: none;
-  animation: fadeIn 0.2s ease-in, pulse 2s ease-in-out infinite;
-  z-index: 10001 !important;
+.djs-element[class*="editing-"] {
+  outline: 3px solid rgba(255, 193, 7, 0.8) !important;
+  outline-offset: 3px;
+  filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
@@ -110,16 +136,5 @@
   50% {
     opacity: 0.9;
     transform: scale(1.02);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

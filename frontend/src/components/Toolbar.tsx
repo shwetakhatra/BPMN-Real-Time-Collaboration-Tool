@@ -3,8 +3,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk, faBrain, faRotateRight, faSignOut } from "@fortawesome/free-solid-svg-icons";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { socket } from "@/services/socket";
+import { downloadFile, generateFilename } from "@/utils/fileUtils";
+import { API_ENDPOINTS } from "@/constants";
 import Button from "./ui/Button";
 import SummaryModal from "./SummaryModal";
+
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const Toolbar = () => {
   const setUsername = useDiagramStore((s) => s.setUsername);
@@ -14,24 +18,9 @@ const Toolbar = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleLeave = () => {
-    if (socket) {
-      socket.disconnect();
-    }
+    socket?.disconnect();
     setUsername(null);
     setUsers([]);
-    localStorage.removeItem("username");
-  };
-
-  const downloadXML = (xml: string) => {
-    const blob = new Blob([xml], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `bpmn-diagram-${new Date().toISOString().split("T")[0]}.xml`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const handleSaveVersion = async () => {
@@ -44,7 +33,7 @@ const Toolbar = () => {
         alert("Failed to export diagram");
         return;
       }
-      downloadXML(xml);
+      downloadFile(xml, generateFilename("bpmn-diagram", "xml"));
     } catch {
       alert("Failed to export diagram");
     }
@@ -62,7 +51,7 @@ const Toolbar = () => {
         return;
       }
 
-      const response = await fetch("http://127.0.0.1:8000/api/summary", {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUMMARY}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ xml }),

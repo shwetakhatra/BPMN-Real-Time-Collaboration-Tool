@@ -25,8 +25,16 @@ interface DiagramStore {
   setEditingElement: (elementId: string | null, username: string | null) => void;
 }
 
+// Initialize username from localStorage if available
+const getInitialUsername = (): string | null => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("username");
+  }
+  return null;
+};
+
 export const useDiagramStore = create<DiagramStore>((set) => ({
-  username: null,
+  username: getInitialUsername(),
   users: [],
   chat: [],
   activityLogs: [],
@@ -34,7 +42,14 @@ export const useDiagramStore = create<DiagramStore>((set) => ({
   xml: "",
   locks: {},
   editingElements: {},
-  setUsername: (username) => set({ username }),
+  setUsername: (username) => {
+    set({ username });
+    if (username) {
+      localStorage.setItem("username", username);
+    } else {
+      localStorage.removeItem("username");
+    }
+  },
   setUsers: (users) => set({ users }),
   addChatMessage: (msg) => set((state) => ({ chat: [...state.chat, msg] })),
   setChatMessages: (messages) => set({ chat: messages }),

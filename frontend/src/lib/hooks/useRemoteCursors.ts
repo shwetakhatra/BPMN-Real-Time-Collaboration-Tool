@@ -3,6 +3,7 @@ import { socket } from "@/services/socket";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { getColorFromUsername } from "@/utils/colorUtils";
 import { CURSOR_UPDATE_DELAY } from "@/utils/diagramUtils";
+import { SOCKET_EVENTS, Z_INDEX } from "@/constants";
 import type { SocketEvents } from "@/types/socket";
 
 interface UseRemoteCursorsOptions {
@@ -21,7 +22,7 @@ export const useRemoteCursors = ({ containerRef }: UseRemoteCursorsOptions) => {
     cursorEl.style.cssText = `
       position: absolute;
       pointer-events: none;
-      z-index: 10000;
+      z-index: ${Z_INDEX.REMOTE_CURSOR};
       transform: translate(-50%, -100%);
       transition: left 0.05s linear, top 0.05s linear;
     `;
@@ -95,7 +96,7 @@ export const useRemoteCursors = ({ containerRef }: UseRemoteCursorsOptions) => {
     
     mouseMoveTimeoutRef.current = setTimeout(() => {
       if (socket?.connected) {
-        socket.emit("cursor_move", { x, y });
+        socket.emit(SOCKET_EVENTS.CURSOR_MOVE, { x, y });
       }
     }, CURSOR_UPDATE_DELAY);
   }, [socket, username, containerRef]);
@@ -110,7 +111,7 @@ export const useRemoteCursors = ({ containerRef }: UseRemoteCursorsOptions) => {
     const sendInitialStatus = () => {
       if (socket?.connected) {
         setTimeout(() => {
-          if (socket?.connected) socket.emit("get_users");
+          if (socket?.connected) socket.emit(SOCKET_EVENTS.GET_USERS);
         }, 500);
       }
     };
@@ -129,10 +130,10 @@ export const useRemoteCursors = ({ containerRef }: UseRemoteCursorsOptions) => {
 
     const attachListeners = () => {
       if (socket) {
-        socket.off("cursor_update", onCursorUpdate);
-        socket.off("user_update", onUserUpdate);
-        socket.on("cursor_update", onCursorUpdate);
-        socket.on("user_update", onUserUpdate);
+        socket.off(SOCKET_EVENTS.CURSOR_UPDATE, onCursorUpdate);
+        socket.off(SOCKET_EVENTS.USER_UPDATE, onUserUpdate);
+        socket.on(SOCKET_EVENTS.CURSOR_UPDATE, onCursorUpdate);
+        socket.on(SOCKET_EVENTS.USER_UPDATE, onUserUpdate);
       }
     };
 
@@ -153,8 +154,8 @@ export const useRemoteCursors = ({ containerRef }: UseRemoteCursorsOptions) => {
       window.removeEventListener("socket-ready", handleSocketReady);
       
       if (socket) {
-        socket.off("cursor_update", onCursorUpdate);
-        socket.off("user_update", onUserUpdate);
+        socket.off(SOCKET_EVENTS.CURSOR_UPDATE, onCursorUpdate);
+        socket.off(SOCKET_EVENTS.USER_UPDATE, onUserUpdate);
       }
       
       cursorElementsRef.current.forEach((cursorEl) => cursorEl.remove());
