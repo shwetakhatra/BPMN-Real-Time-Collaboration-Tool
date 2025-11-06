@@ -245,6 +245,28 @@ BPMN-Real-Time-Collaboration-Tool/
 - **Pydantic** - Data validation
 - **Python 3.8+** - Programming language
 
+## 🧪 Testing
+
+### Backend Tests
+
+Backend tests use **pytest** and cover services, API endpoints, and edge cases.
+
+**Run Backend Tests:**
+```bash
+cd backend
+pytest
+```
+
+### Frontend Tests
+
+Frontend tests use **Vitest** and **React Testing Library** for component and utility testing.
+
+**Run Frontend Tests:**
+```bash
+cd frontend
+npm test
+```
+
 ## 🔌 API Endpoints
 
 ### REST Endpoints
