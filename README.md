@@ -136,11 +136,9 @@ npm run dev
 2. Enter your username to join the session
 3. Start collaborating on BPMN diagrams!
 
-### Production Build
-
 ## 🏗️ Architecture
 
-### Frontend Architecture
+### Frontend
 
 - **Framework**: React 19 with TypeScript
 - **State Management**: Zustand for global state
@@ -149,39 +147,12 @@ npm run dev
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
 
-### Backend Architecture
+### Backend
 
 - **Framework**: FastAPI
 - **WebSocket**: Socket.IO (AsyncServer)
 - **State Management**: Thread-safe in-memory storage
 - **API**: RESTful endpoints for health checks and AI summary
-
-### Key Components
-
-#### Frontend Components
-
-- `App.tsx` - Main application component with session management
-- `DiagramCanvas.tsx` - BPMN diagram editor canvas
-- `Layout.tsx` - Responsive layout with sidebars
-- `UserSidebar.tsx` - Active users list
-- `ChatSidebar.tsx` - Real-time chat interface
-- `Toolbar.tsx` - Diagram actions (export, AI summary, sync)
-- `SummaryModal.tsx` - AI summary display modal
-- `JoinForm.tsx` - User authentication/joining
-
-#### Backend Services
-
-- `user_manager.py` - Manages connected users and sessions
-- `diagram_state.py` - Thread-safe diagram state management
-- `diagram_summary.py` - AI-powered diagram analysis
-- `events.py` - Socket.IO event handlers
-
-#### Custom Hooks
-
-- `useBpmnModeler.ts` - BPMN modeler initialization and management
-- `useRemoteCursors.ts` - Remote cursor tracking
-- `useEditingMarkers.ts` - Editing indicator management
-- `useSocketListeners.ts` - Reusable socket event listeners
 
 ## 🔧 Edge Cases Considered
 
