@@ -31,12 +31,10 @@ class TestUserManager:
         assert "shweta" not in self.manager.username_to_sid
 
     def test_get_username(self):
-        """Test getting username by socket ID"""
         self.manager.add_user("sid1", "shweta")
         assert self.manager.get_username("sid1") == "shweta"
 
     def test_list_users(self):
-        """Test listing all unique users"""
         self.manager.add_user("sid1", "shweta")
         self.manager.add_user("sid2", "mohit")
         self.manager.add_user("sid3", "shweta")

@@ -11,7 +11,7 @@ This application provides a web-based BPMN diagram editor with real-time collabo
 - **Real-Time Collaboration**: Multiple users can edit diagrams simultaneously with live synchronization
 - **Visual Feedback**: See other users' cursors and editing indicators in real-time
 - **Session Persistence**: User sessions persist across page refreshes
-- **AI-Powered Analysis**: Generate intelligent summaries of BPMN diagrams
+- **Diagram Analysis**: Generate automated summaries of BPMN diagrams
 - **Modern UI**: Responsive design that works on desktop and mobile devices
 - **Thread-Safe Backend**: Thread-safe state management for concurrent operations
 
@@ -39,8 +39,8 @@ This application provides a web-based BPMN diagram editor with real-time collabo
    - Chat history preserved during the session
    - Unread message indicators
 
-5. **AI Diagram Summary**
-   - Generate intelligent summaries of BPMN diagrams
+5. **Diagram Summary**
+   - Generate automated summaries of BPMN diagrams based on element analysis
 
 6. **Diagram Management**
    - Export diagrams as XML files
@@ -152,7 +152,7 @@ npm run dev
 - **Framework**: FastAPI
 - **WebSocket**: Socket.IO (AsyncServer)
 - **State Management**: Thread-safe in-memory storage
-- **API**: RESTful endpoints for health checks and AI summary
+- **API**: RESTful endpoints for health checks and diagram summary
 
 ## 🔧 Edge Cases Considered
 
@@ -198,7 +198,7 @@ BPMN-Real-Time-Collaboration-Tool/
 │   │   └── services/
 │   │       ├── user_manager.py      # User session management
 │   │       ├── diagram_state.py     # Thread-safe state storage
-│   │       ├── diagram_summary.py   # AI diagram analysis
+│   │       ├── diagram_summary.py   # Diagram analysis and summary generation
 │   │       └── log_event.py         # Logging utilities
 │   ├── requirements.txt         # Python dependencies
 │   └── venv/                   # Virtual environment (gitignored)
@@ -273,7 +273,7 @@ npm test
 
 - `GET /health` - Health check endpoint
 - `GET /users` - Get list of online users
-- `POST /api/summary` - Generate AI summary of diagram
+- `POST /api/summary` - Generate summary of diagram
 
 ### WebSocket Events
 

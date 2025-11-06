@@ -1,7 +1,7 @@
 class UserManager:
     def __init__(self):
-        self.online_users = {}  # key: sid, value: username
-        self.username_to_sid = {}  # key: username, value: list of sids
+        self.online_users = {}
+        self.username_to_sid = {}
 
     def add_user(self, sid: str, username: str):
         self.online_users[sid] = username
@@ -21,11 +21,9 @@ class UserManager:
         return self.online_users.get(sid, f"User-{sid[:5]}")
 
     def get_sids_by_username(self, username: str) -> list:
-        """Get all socket IDs for a given username"""
         return self.username_to_sid.get(username, [])
 
     def list_users(self):
-        # Return unique usernames only (preserves order, removes duplicates)
         all_users = list(self.online_users.values())
         return list(dict.fromkeys(all_users))
 

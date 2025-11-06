@@ -6,7 +6,6 @@ from app.utils import log_and_broadcast
 from socketio import AsyncServer
 
 def get_username_from_request(sid, environ, auth):
-    """Extract username from request"""
     username = (auth or {}).get("username") or environ.get("HTTP_USERNAME")
     if not username:
         from urllib.parse import parse_qs
@@ -15,7 +14,6 @@ def get_username_from_request(sid, environ, auth):
     return username or f"User-{sid[:5]}"
 
 async def send_initial_state(sio, sid):
-    """Send current state to new connection"""
     all_users = list(dict.fromkeys(user_manager.online_users.values()))
     await sio.emit("user_update", all_users, to=sid, namespace="/")
     await sio.emit("user_update", all_users, namespace="/")
@@ -78,7 +76,6 @@ def register_events(sio: AsyncServer):
         payload = LockPayload(**data)
         user = user_manager.get_username(sid)
         diagram_state.lock_element(payload.element_id, user)
-        # Broadcast to all clients (excluding sender)
         await sio.emit("element_locked", {"element_id": payload.element_id, "locked_by": user}, skip_sid=sid, namespace="/")
         await sio.emit("locks_update", diagram_state.locks, skip_sid=sid, namespace="/")
 
@@ -87,7 +84,6 @@ def register_events(sio: AsyncServer):
         payload = LockPayload(**data)
         user = user_manager.get_username(sid)
         diagram_state.unlock_element(payload.element_id)
-        # Broadcast to all clients (excluding sender)
         await sio.emit("element_unlocked", {"element_id": payload.element_id}, skip_sid=sid, namespace="/")
         await sio.emit("locks_update", diagram_state.locks, skip_sid=sid, namespace="/")
 
@@ -106,7 +102,6 @@ def register_events(sio: AsyncServer):
 
     @sio.event(namespace="/")
     async def sync_diagram(sid):
-        """Sync diagram state for all users"""
         if diagram_state.xml:
             await sio.emit("diagram_update", {"xml": diagram_state.xml}, namespace="/")
             user = user_manager.get_username(sid)

@@ -3,21 +3,16 @@ from typing import Dict, List
 from collections import Counter
 
 def analyze_bpmn_diagram(xml_string: str) -> Dict:
-    """Analyze BPMN XML and extract key information"""
     try:
         root = ET.fromstring(xml_string)
-        
-        # Register namespaces
         namespaces = {
             'bpmn': 'http://www.omg.org/spec/BPMN/20100524/MODEL',
             'bpmndi': 'http://www.omg.org/spec/BPMN/20100524/DI'
         }
         
-        # Find all processes
         processes = root.findall('.//bpmn:process', namespaces)
         process_count = len(processes)
         
-        # Count element types
         element_types = Counter()
         element_names = []
         
@@ -25,7 +20,6 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
             process_name = process.get('name', 'Unnamed Process')
             element_names.append(process_name)
             
-            # Count different BPMN elements
             for elem_type in ['startEvent', 'endEvent', 'task', 'userTask', 'serviceTask', 
                             'scriptTask', 'businessRuleTask', 'manualTask', 'sendTask', 
                             'receiveTask', 'exclusiveGateway', 'inclusiveGateway', 
@@ -36,34 +30,28 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
                     count = len(elements)
                     element_types[elem_type] += count
                     
-                    # Collect names if available
                     for elem in elements:
                         name = elem.get('name')
                         if name:
                             element_names.append(name)
         
-        # Count sequence flows
         sequence_flows = root.findall('.//bpmn:sequenceFlow', namespaces)
         flow_count = len(sequence_flows)
         
-        # Count message flows
         message_flows = root.findall('.//bpmn:messageFlow', namespaces)
         message_flow_count = len(message_flows)
         
-        # Build user-friendly summary
         if process_count == 0:
             summary_text = "This diagram appears to be empty or contains only basic structure."
         else:
             summary_parts = []
             
-            # Start with process description
             process_name = element_names[0] if element_names else "the process"
             if process_name and process_name != "Unnamed Process":
                 summary_parts.append(f"This diagram shows a process called '{process_name}'.")
             else:
                 summary_parts.append("This diagram shows a business process.")
             
-            # Start events
             start_events = element_types.get('startEvent', 0)
             if start_events > 0:
                 if start_events == 1:
@@ -71,7 +59,6 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
                 else:
                     summary_parts.append(f"The process begins with {start_events} start events.")
             
-            # Tasks - describe what happens
             total_tasks = sum(element_types.get(t, 0) for t in 
                             ['task', 'userTask', 'serviceTask', 'scriptTask', 
                              'businessRuleTask', 'manualTask', 'sendTask', 'receiveTask'])
@@ -81,7 +68,6 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
                 else:
                     summary_parts.append(f"Then it performs {total_tasks} tasks.")
             
-            # Gateways - describe decision points
             total_gateways = sum(element_types.get(g, 0) for g in 
                                ['exclusiveGateway', 'inclusiveGateway', 'parallelGateway', 
                                 'eventBasedGateway', 'complexGateway'])
@@ -91,7 +77,6 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
                 else:
                     summary_parts.append(f"The process includes {total_gateways} decision points where the flow can branch.")
             
-            # End events
             end_events = element_types.get('endEvent', 0)
             if end_events > 0:
                 if end_events == 1:
@@ -99,11 +84,9 @@ def analyze_bpmn_diagram(xml_string: str) -> Dict:
                 else:
                     summary_parts.append(f"The process can end at {end_events} different end points.")
             
-            # Overall flow description - simplified
             if flow_count > 0 and flow_count > 1:
                 summary_parts.append(f"All steps are connected through {flow_count} flow connections.")
             
-            # Create summary text
             summary_text = " ".join(summary_parts)
         
         return {

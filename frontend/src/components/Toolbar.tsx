@@ -39,7 +39,7 @@ const Toolbar = () => {
     }
   };
 
-  const handleAISummary = async () => {
+  const handleDiagramSummary = async () => {
     const exportXML = window.exportDiagramXML;
     if (!exportXML) return;
 
@@ -90,11 +90,11 @@ const Toolbar = () => {
         <Button
           variant="secondary"
           icon={faBrain}
-          onClick={handleAISummary}
+          onClick={handleDiagramSummary}
           loading={isLoading}
           loadingText="Loading..."
         >
-          <span className="hidden sm:inline">AI Summary</span>
+          <span className="hidden sm:inline">Diagram Summary</span>
         </Button>
         <Button
           variant="gray"

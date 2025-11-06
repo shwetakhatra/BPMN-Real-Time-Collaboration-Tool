@@ -31,7 +31,6 @@ class TestDiagramState:
         assert "element1" not in locks
 
     def test_save_version(self):
-        """Test saving a diagram version"""
         self.state.xml = "<test>xml</test>"
         self.state.save_version()
         versions = self.state.versions
@@ -40,7 +39,6 @@ class TestDiagramState:
         assert "timestamp" in versions[0]
 
     def test_add_chat_message(self):
-        """Test adding a chat message"""
         message = self.state.add_chat_message("alice", "Hello!")
         assert message["username"] == "alice"
         assert message["message"] == "Hello!"
